@@ -1,72 +1,45 @@
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
-import { remark } from 'remark'; // ← これを追加
-import html from 'remark-html'; // ← これを追加
+import { client } from './microcms';
 
+// src/lib/posts.js の getSortedPostsData 関数をこれに差し替え
 
-// postsフォルダへのパスを取得
-const postsDirectory = path.join(process.cwd(), 'posts');
+export const getSortedPostsData = async () => {
+  try {
+    console.log('getSortedPostsData: microCMSからデータを取得開始...');
+    const data = await client.get({ endpoint: 'blogs' });
 
-export function getSortedPostsData() {
-  // /posts ディレクトリ内のファイル名を取得
-  const fileNames = fs.readdirSync(postsDirectory);
-  const allPostsData = fileNames.map((fileName) => {
-    // ファイル名から '.md' を削除してIDとして使用
-    const id = fileName.replace(/\.md$/, '');
+    console.log('---------------------------------');
+    console.log('【microCMSからの生データ】');
+    console.log(data); // 1. microCMSから返ってきた生データを表示します
+    console.log('---------------------------------');
 
-    // Markdownファイルを文字列として読み込む
-    const fullPath = path.join(postsDirectory, fileName);
-    const fileContents = fs.readFileSync(fullPath, 'utf8');
+    return data.contents;
 
-    // gray-matter を使って投稿のメタデータ部分を解析
-    const matterResult = matter(fileContents);
+  } catch (error) {
+    console.error('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+    console.error('【エラー】microCMSとの通信に失敗しました：', error.message);
+    console.error('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+    // エラー時はサイトが落ちないように、空の配列を返す
+    return []; 
+  }
+};
 
-    // データをIDと組み合わせる
-    return {
-      id,
-      ...matterResult.data,
-    };
-  });
-
-  // 投稿を日付でソートする
-  return allPostsData.sort((a, b) => {
-    if (a.date < b.date) {
-      return 1;
-    } else {
-      return -1;
-    }
-  });
-}
-export function getAllPostIds() {
-  const fileNames = fs.readdirSync(postsDirectory);
-
-  return fileNames.map((fileName) => {
+// ブログのID一覧を取得
+export const getAllPostIds = async () => {
+  const data = await client.get({ endpoint: 'blogs' });
+  return data.contents.map((content) => {
     return {
       params: {
-        id: fileName.replace(/\.md$/, ''),
+        id: content.id,
       },
     };
   });
-}
+};
 
-export async function getPostData(id) {
-  const fullPath = path.join(postsDirectory, `${id}.md`);
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
-
-  // メタデータを解析
-  const matterResult = matter(fileContents);
-
-  // remark を使ってMarkdownをHTML文字列に変換
-  const processedContent = await remark()
-    .use(html)
-    .process(matterResult.content);
-  const contentHtml = processedContent.toString();
-
-  // データをIDとHTMLコンテンツと組み合わせる
-  return {
-    id,
-    contentHtml,
-    ...matterResult.data,
-  };
-}
+// ブログの詳細データを取得
+export const getPostData = async (id) => {
+  const data = await client.get({
+    endpoint: 'blogs',
+    contentId: id,
+  });
+  return data;
+};

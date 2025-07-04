@@ -14,7 +14,7 @@ export default function PostDisplay({ postData }) {
         </div>
         <div
           className="prose lg:prose-xl max-w-none"
-          dangerouslySetInnerHTML={{ __html: postData.contentHtml }}
+          dangerouslySetInnerHTML={{ __html: postData.content }}
         />
 
         {/* メタデータに graph: true があればグラフを表示 */}
