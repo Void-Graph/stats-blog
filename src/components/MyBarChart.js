@@ -1,4 +1,4 @@
-"use client"; // このコンポーネントがブラウザで動作することを明示します
+"use client";
 
 import { Bar } from 'react-chartjs-2';
 import {
@@ -11,7 +11,6 @@ import {
   Legend,
 } from 'chart.js';
 
-// Chart.jsに必要な要素を登録します
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -21,7 +20,14 @@ ChartJS.register(
   Legend
 );
 
-const MyBarChart = () => {
+// ↓↓↓ この行が、外部からデータを受け取るための重要な部分です！
+const MyBarChart = ({ chartData }) => {
+
+  // データが渡されていない場合の安全対策
+  if (!chartData || !chartData.labels || !chartData.datasets) {
+    return <div className="text-center text-gray-500">グラフデータがありません。</div>;
+  }
+
   // グラフのオプション設定
   const options = {
     responsive: true,
@@ -31,26 +37,15 @@ const MyBarChart = () => {
       },
       title: {
         display: true,
-        text: 'サンプル棒グラフ',
+        text: 'オリジナル棒グラフ',
       },
     },
   };
 
-  // グラフに表示するデータ
+  // グラフに表示するデータ (propsから渡されたchartDataを使います)
   const data = {
-    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
-    datasets: [
-      {
-        label: 'データセットA',
-        data: [65, 59, 80, 81, 56, 55],
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-      },
-      {
-        label: 'データセットB',
-        data: [28, 48, 40, 19, 86, 27],
-        backgroundColor: 'rgba(53, 162, 235, 0.5)',
-      },
-    ],
+    labels: chartData.labels,
+    datasets: chartData.datasets,
   };
 
   return <Bar options={options} data={data} />;
